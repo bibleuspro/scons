@@ -1,13 +1,10 @@
-"""SCons.Tool.mslib
+"""SCons.Tool.DCommon
 
-Tool-specific initialization for lib (MicroSoft library archiver).
+Common code for the various D tools.
 
-There normally shouldn't be any need to import this module directly.
-It will usually be imported through the generic SCons.Tool.Tool()
-selection method.
-
+Coded by Russel Winder (russel@winder.org.uk)
+2012-09-06
 """
-
 #
 # Copyright (c) 2001 - 2014 The SCons Foundation
 #
@@ -31,31 +28,26 @@ selection method.
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-__revision__ = "src/engine/SCons/Tool/mslib.py  2014/07/05 09:42:21 garyo"
+__revision__ = "src/engine/SCons/Tool/DCommon.py  2014/07/05 09:42:21 garyo"
 
-import SCons.Defaults
-import SCons.Tool
-import SCons.Tool.msvs
-import SCons.Tool.msvc
-import SCons.Util
+import os.path
 
-from MSCommon import msvc_exists, msvc_setup_env_once
+def isD(env, source):
+    if not source:
+        return 0
+    for s in source:
+        if s.sources:
+            ext = os.path.splitext(str(s.sources[0]))[1]
+            if ext == '.d':
+                return 1
+    return 0
 
-def generate(env):
-    """Add Builders and construction variables for lib to an Environment."""
-    SCons.Tool.createStaticLibBuilder(env)
-
-    # Set-up ms tools paths
-    msvc_setup_env_once(env)
-
-    env['AR']          = 'lib'
-    env['ARFLAGS']     = SCons.Util.CLVar('/nologo')
-    env['ARCOM']       = "${TEMPFILE('$AR $ARFLAGS /OUT:$TARGET $SOURCES')}"
-    env['LIBPREFIX']   = ''
-    env['LIBSUFFIX']   = '.lib'
-
-def exists(env):
-    return msvc_exists()
+def addDPATHToEnv(env, executable):
+    dPath = env.WhereIs(executable)
+    if dPath:
+        phobosDir = dPath[:dPath.rindex(executable)] + '/../src/phobos'
+        if os.path.isdir(phobosDir):
+            env.Append(DPATH=[phobosDir])
 
 # Local Variables:
 # tab-width:4
